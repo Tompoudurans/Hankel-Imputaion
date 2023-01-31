@@ -1,4 +1,5 @@
 import cvxpy as cp
+import numpy as np
 
 def mcwb(Y,L,e,bina,maxinter):
     """

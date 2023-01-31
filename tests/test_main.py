@@ -31,9 +31,21 @@ def autor(x,trm):
     return y
 
 def test_full():
-    trm = [0.3,-0,1,0.9]
+    trm =[
+        0.6,
+        0.4,
+        -0.1,
+        -0.05,
+        0.03,
+        0.008,
+        0.0007,
+        -0.0004,
+        0.00002,
+    ]
     y = [0]*len(trm)
-    ar = pandas.DataFrame([loopar(y,trm,200,0.1),loopar(y,trm,200,0.2)],"test.csv")
-    holear = mkhle(ar,0.1)
+    a = loopar(y.copy(),trm,50,0.1)
+    b = loopar(y.copy(),trm,50,0.2)
+    ar = pandas.DataFrame([a,b]).transpose()
+    ar.to_csv("test.csv")
+    holear = mkhle(ar.copy(),0.1)
     hankelimputation.fullfilling(holear,"test")
-    
