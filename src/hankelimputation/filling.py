@@ -28,10 +28,14 @@ def batchfilling(data,dname,bsize):
     numdat = data.to_numpy()
     bina = data.notna()
     L = testmax_L(data.iloc[:bsize])
-    list_frm = [] 
+    N,dim = data.shape
+    list_frm = []
     for batch in range(0,len(data)-bsize,bsize):
         print(batch,batch+bsize)
-        filled = mcwb2d(numdat[batch:batch+bsize],L,0.1,bina[batch:batch+bsize],50000,3)
+        if dim > 1:
+            filled = mcwb2d(numdat[batch:batch+bsize],L,0.1,bina[batch:batch+bsize],50000,dim)
+        else:
+            filled = mcwb(numdat[batch:batch+bsize],L,0.1,bina[batch:batch+bsize],50000)
         frm = pd.DataFrame(filled)
         frm.to_csv(dname + "_filled1.csv",index=False)
         list_frm.append(frm)
@@ -39,12 +43,16 @@ def batchfilling(data,dname,bsize):
     togat.to_csv(dname + "_filled.csv",index=False)
     return list_frm
 
-def fullfilling(data,dname): 
-    L = testmax_L(data) 
+def fullfilling(data,dname):
+    L = testmax_L(data)
+    N,dim = data.shape
     #^prevent ValueError: All the input dimensions except for axis 0 must match exactly. cp.bmat(hank)
     numdat = data.to_numpy()
     bina = data.notna()
-    filled = mcwb2d(numdat,L,0.1,bina,50000,3)
+    if dim > 1:
+        filled = mcwb2d(numdat,L,0.1,bina,50000,dim)
+    else:
+        filled = mcwb(numdat.transpose()[0],L,0.1,bina.to_numpy().transpose()[0],50000)
     frms = pd.DataFrame(filled)
     frms.to_csv(dname + "_filled.csv",index=False)
     return filled
