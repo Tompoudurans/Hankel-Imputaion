@@ -43,9 +43,46 @@ def test_full():
         0.00002,
     ]
     y = [0]*len(trm)
-    a = loopar(y.copy(),trm,50,0.1)
-    b = loopar(y.copy(),trm,50,0.2)
+    a = loopar(y.copy(),trm,40,0.1)
+    b = loopar(y.copy(),trm,40,0.2)
     ar = pandas.DataFrame([a,b]).transpose()
     ar.to_csv("test.csv")
+    holear = mkhle(ar.copy(),0.1)
+    hankelimputation.fullfilling(holear,"test")
+
+def test_batch():
+    trm =[
+        0.6,
+        0.4,
+        -0.1,
+        -0.05,
+        0.03,
+        0.008,
+        0.0007,
+        -0.0004,
+        0.00002,
+    ]
+    y = [0]*len(trm)
+    a = loopar(y.copy(),trm,30,0.1)
+    b = loopar(y.copy(),trm,30,0.2)
+    ar = pandas.DataFrame([a,b]).transpose()
+    holear = mkhle(ar.copy(),0.1)
+    hankelimputation.batchfilling(holear,"test",10)
+
+def test_sigle():
+    trm =[
+        0.6,
+        0.4,
+        -0.1,
+        -0.05,
+        0.03,
+        0.008,
+        0.0007,
+        -0.0004,
+        0.00002,
+    ]
+    y = [0]*len(trm)
+    a = loopar(y.copy(),trm,4,0.1)
+    ar = pandas.DataFrame(a)
     holear = mkhle(ar.copy(),0.1)
     hankelimputation.fullfilling(holear,"test")
