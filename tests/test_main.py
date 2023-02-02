@@ -2,6 +2,7 @@ import hankelimputation
 import random
 import numpy
 import pandas
+import os
 
 def mkhle(data,percent):
     x, y = data.shape
@@ -48,7 +49,8 @@ def test_full():
     ar = pandas.DataFrame([a,b]).transpose()
     ar.to_csv("test.csv")
     holear = mkhle(ar.copy(),0.1)
-    hankelimputation.fullfilling(holear,"test")
+    hankelimputation.fullfilling(holear,"test_full")
+    assert os.path.isfile("test_full_filled.csv")
 
 def test_batch():
     trm =[
@@ -67,9 +69,10 @@ def test_batch():
     b = loopar(y.copy(),trm,30,0.2)
     ar = pandas.DataFrame([a,b]).transpose()
     holear = mkhle(ar.copy(),0.1)
-    hankelimputation.batchfilling(holear,"test",10)
+    hankelimputation.batchfilling(holear,"test_batch",10)
+    assert os.path.isfile("test_batch_filled.csv")
 
-def test_sigle():
+def test_single():
     trm =[
         0.6,
         0.4,
@@ -85,4 +88,5 @@ def test_sigle():
     a = loopar(y.copy(),trm,4,0.1)
     ar = pandas.DataFrame(a)
     holear = mkhle(ar.copy(),0.1)
-    hankelimputation.fullfilling(holear,"test")
+    hankelimputation.fullfilling(holear,"test_single")
+    assert os.path.isfile("test_single_filled.csv")

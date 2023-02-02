@@ -6,6 +6,9 @@ import click
 @click.option("--batch",help="state batchsize",type="int",default=0)
 
 def main(batch,file):
+    """
+    read a file and fill using the hankel imputaion method 
+    """
     data = pd.read_csv(file,skip_blank_lines=False)
     if batch == 0:
         fullfilling(data,file)

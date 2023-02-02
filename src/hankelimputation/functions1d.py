@@ -1,14 +1,14 @@
 import cvxpy as cp
 import numpy as np
 
-def mcwb(Y,L,e,bina,maxinter):
+def hankel_imputaion_1d(data,lag,e,mask,maxinter):
     """
-    Weighted vectors with forecast
+
     """
-    N=len(Y)
+    N=len(data)
     Yapp = cp.Variable(N)
-    objective = cp.Minimize(cp.normNuc(cphanker(Yapp[:L],Yapp[L:N])))
-    constraints = [cp.norm((Y[bina]-Yapp[bina])) <= e]
+    objective = cp.Minimize(cp.normNuc(cphanker(Yapp[:lag],Yapp[lag:N])))
+    constraints = [cp.norm((data[mask]-Yapp[mask])) <= e]
     prob = cp.Problem(objective, constraints)
     prob.solve(verbose=True,max_iters=maxinter)
     return Yapp.value
@@ -20,10 +20,10 @@ def cphanker(row,reman):
         hank.append(np.append(row[:xi-i],reman[1:xi+i+1]))
     return cp.bmat(hank)
 
-def construct1d(Y,L):
+def construct1d(data,lag):
     """
-    sends a ValueError if L is too big
+    sends a ValueError if lag is too big
     """
-    N= Y.shape
+    N= data.shape
     Yapp = cp.Variable(N)
-    cp.Minimize(cp.normNuc(cphanker(Yapp[:L],Yapp[L:])))
+    cp.Minimize(cp.normNuc(cphanker(Yapp[:lag],Yapp[lag:])))
