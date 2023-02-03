@@ -25,39 +25,43 @@ def testmax_Lag(data):
             print(lag)
             return lag
 
-def batchfilling(data,filename,batch_size):
+def batchfilling(numpy_data,mask,lag,e,dim,batch_size,N):
     """
-    fill data in batches using hankel imputaion method and saves it to a csv file
+    fill data in batches using hankel imputaion method 
     """
-    numpy_data = data.to_numpy()
-    mask = data.notna()
-    lag = testmax_Lag(data.iloc[:batch_size])
-    N,dim = data.shape
     list_filled_dataframe = []
-    for batch in range(0,len(data)-batch_size,batch_size):
+    for batch in range(0,N-batch_size,batch_size):
         print(batch,batch+batch_size)
-        if dim > 1:
-            filled = hankel_imputaion_2d(numpy_data[batch:batch+batch_size],lag,0.1,mask[batch:batch+batch_size],50000,dim)
-        else:
-            filled = hankel_imputaion_1d(numpy_data[batch:batch+batch_size],lag,0.1,mask[batch:batch+batch_size],50000)
-        filled_dataframe = pd.DataFrame(filled)
+        filled_dataframe = filling(numpy_data[batch:batch+batch_size],mask[batch:batch+batch_size],lag,e,dim)
         list_filled_dataframe.append(filled_dataframe)
-    togat = pd.concat(list_filled_dataframe)
-    togat.to_csv(filename + "_filled.csv",index=False)
-    return list_filled_dataframe
+    return pd.concat(list_filled_dataframe)
 
-def fullfilling(data,filename):
+def filling(numpy_data,mask,lag,e,dim):
     """
-    fill data using hankel imputaion method and saves it to a csv file
+    fill data using hankel imputaion method 
     """
-    lag = testmax_Lag(data)
-    N,dim = data.shape
+    if dim > 1:
+        filled = hankel_imputaion_2d(numpy_data,lag,e,mask,50000,dim)
+    else:
+        filled = hankel_imputaion_1d(numpy_data.transpose()[0],lag,e,mask.to_numpy().transpose()[0],50000)
+    return pd.DataFrame(filled)
+
+def processing(data,batch,e):
+    """
+    calulates the mask, the lag, the shape
+    """
     numpy_data = data.to_numpy()
     mask = data.notna()
-    if dim > 1:
-        filled = hankel_imputaion_2d(numpy_data,lag,0.1,mask,50000,dim)
+    N,dim = data.shape
+    if batch == 0:
+        lag = testmax_Lag(data)
+        filled = filling(numpy_data,mask,lag,e,dim)
     else:
-        filled = hankel_imputaion_1d(numpy_data.transpose()[0],lag,0.1,mask.to_numpy().transpose()[0],50000)
-    filled_dataframe = pd.DataFrame(filled)
-    filled_dataframe.to_csv(filename + "_filled.csv",index=False)
+        lag = testmax_Lag(data.iloc[:batch])
+        filled = batchfilling(numpy_data,mask,lag,e,dim,batch,N)
     return filled
+
+def refillzero(dataframe):
+    refill = dataframe.where(dataframe != 0.0)
+    print("failed amount:",refill.isna().sum())
+    return refill.interpolate()

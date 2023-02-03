@@ -1,20 +1,23 @@
 from .filling import *
 import click
 
+
 @click.command()
-@click.option("--file",help="state filename")
-@click.option("--batch",help="state batchsize",type="int",default=0)
+@click.option("--file", help="state filename")
+@click.option("--batch", help="state batchsize", type=int, default=0)
+@click.option("--e", help="determises how close the model is to data", type=float, default=0.1)
 
-def main(batch,file):
+def main(batch, file,e):
     """
-    read a file and fill using the hankel imputaion method 
+    read a file and fill using the hankel imputaion method
     """
-    data = pd.read_csv(file,skip_blank_lines=False)
-    if batch == 0:
-        fullfilling(data,file)
-    else:
-        batchfilling(data,file,batch)
+    removezero = True
+    data = pd.read_csv(file, skip_blank_lines=False)
+    filled = processing(data,batch,e)
+    if removezero:
+        filled = refillzero(filled)
+    filled.to_csv(file.split[0] + "_filled.csv",index=False)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
