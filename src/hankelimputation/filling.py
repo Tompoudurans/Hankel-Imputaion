@@ -3,25 +3,26 @@ from .functions2d import *
 import pandas as pd
 
 
-def testmax_Lag(data):
+def testmax_Lag(numpy_data):
     """
     Test the Maximum number that lag can have a large lag gives a better results but too big have this error occurs:
     ValueError: All the input dimensions except for axis 0 must match exactly. cp.bmat(hank)
     """
-    numpy_data = data.to_numpy()
-    N, dim = data.shape
+    N, dim = numpy_data.shape
     pnt = int(N / 2.8)
     for v in range(pnt):
         lag = pnt - v
         try:
-            print(lag)
             if dim > 1:
                 construct2d(numpy_data, lag, dim)
             else:
-                construct1d(numpy_data, lag)
-        except ValueError:
+                construct1d(numpy_data.transpose()[0], lag)
+        except ValueError as e:
             if lag % 5 == 0:
                 print("less than", lag)
+            if lag < int(N / 10):
+                print(e)
+                return
         else:
             print(lag)
             return lag
@@ -66,10 +67,10 @@ def processing(data, batch, e):
     mask = data.notna()
     N, dim = data.shape
     if batch == 0:
-        lag = testmax_Lag(data)
+        lag = testmax_Lag(numpy_data)
         filled = filling(numpy_data, mask, lag, e, dim)
     else:
-        lag = testmax_Lag(data.iloc[:batch])
+        lag = testmax_Lag(numpy_data[:batch])
         filled = batchfilling(numpy_data, mask, lag, e, dim, batch, N)
     return filled
 

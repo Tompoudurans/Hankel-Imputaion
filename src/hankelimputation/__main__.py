@@ -19,7 +19,7 @@ def main(batch, file, e, removezero):
     filled = processing(data, batch, e)
     if removezero:
         filled = refillzero(filled)
-    filled.to_csv(file.split[0] + "_filled.csv", index=False)
+    filled.to_csv(file.split(".")[0] + "_filled.csv", index=False)
 
 
 if __name__ == "__main__":
