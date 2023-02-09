@@ -11,12 +11,15 @@ import click
 @click.option(
     "--removezero", help="do you want to remove collaples?", type=bool, default=False
 )
-def main(batch, file, e, removezero):
+@click.option(
+    "--maxtime", help="how long before the algorithm time out", type=int, default=50000
+)
+def main(batch, file, e, removezero, maxtime):
     """
     read a file and fill using the hankel imputaion method
     """
     data = pd.read_csv(file, skip_blank_lines=False)
-    filled = processing(data, batch, e)
+    filled = processing(data, batch, e, maxtime)
     if removezero:
         filled = refillzero(filled)
     filled.to_csv(file.split(".")[0] + "_filled.csv", index=False)

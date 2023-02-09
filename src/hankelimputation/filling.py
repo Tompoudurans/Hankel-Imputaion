@@ -28,7 +28,7 @@ def testmax_Lag(numpy_data):
             return lag
 
 
-def batchfilling(numpy_data, mask, lag, e, dim, batch_size, N):
+def batchfilling(numpy_data, mask, lag, e, dim, batch_size, N, maxinter):
     """
     fill data in batches using hankel imputaion method
     """
@@ -41,25 +41,26 @@ def batchfilling(numpy_data, mask, lag, e, dim, batch_size, N):
             lag,
             e,
             dim,
+            maxinter,
         )
         list_filled_dataframe.append(filled_dataframe)
     return pd.concat(list_filled_dataframe)
 
 
-def filling(numpy_data, mask, lag, e, dim):
+def filling(numpy_data, mask, lag, e, dim, maxinter):
     """
     fill data using hankel imputaion method
     """
     if dim > 1:
-        filled = hankel_imputaion_2d(numpy_data, lag, e, mask, 50000, dim)
+        filled = hankel_imputaion_2d(numpy_data, lag, e, mask, maxinter, dim)
     else:
         filled = hankel_imputaion_1d(
-            numpy_data.transpose()[0], lag, e, mask.to_numpy().transpose()[0], 50000
+            numpy_data.transpose()[0], lag, e, mask.to_numpy().transpose()[0], maxinter
         )
     return pd.DataFrame(filled)
 
 
-def processing(data, batch, e):
+def processing(data, batch, e, maxinter):
     """
     calulates the mask, the lag, the shape
     """
@@ -68,10 +69,10 @@ def processing(data, batch, e):
     N, dim = data.shape
     if batch == 0:
         lag = testmax_Lag(numpy_data)
-        filled = filling(numpy_data, mask, lag, e, dim)
+        filled = filling(numpy_data, mask, lag, e, dim, maxinter)
     else:
         lag = testmax_Lag(numpy_data[:batch])
-        filled = batchfilling(numpy_data, mask, lag, e, dim, batch, N)
+        filled = batchfilling(numpy_data, mask, lag, e, dim, batch, N, maxinter)
     return filled
 
 
