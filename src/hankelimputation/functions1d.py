@@ -8,6 +8,7 @@ def hankel_imputaion_1d(data, lag, e, mask, maxinter):
     by a convex optimation of minimation of the norm of hankle matrix of imputed variables
     with constraints = norm of mask of data and imputed variables less than a value e
     """
+    print("monovar filling")
     N = len(data)
     Yapp = cp.Variable(N)
     objective = cp.Minimize(cp.normNuc(cphanker(Yapp[:lag], Yapp[lag:N])))

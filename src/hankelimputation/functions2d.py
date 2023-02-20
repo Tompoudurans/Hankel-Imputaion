@@ -7,6 +7,7 @@ def hankel_imputaion_2d(data, lag, e, mask, maxinter, dim):
     by a convex optimation of minimation of the norm of hankle matrix of imputed variables
     with constraints = norm of mask of data and imputed variables less than a value e
     """
+    print("Multivar filling")
     N = data.shape
     Yapp = cp.Variable(N)
     constraints = [cp.norm((data[mask] - Yapp[mask])) <= e]
@@ -24,10 +25,10 @@ def cp2dhanker(row, reman, dim):
     xi = row.shape[0]
     for i in range(xi):
         fiscal = xi - i
-        lacal = xi + i + 1
-        left = cp.hstack(row[:fiscal])
-        right = cp.hstack(reman[dim:lacal])
-        mat_row = cp.hstack([left, right])
+        lacal = xi + i + 1 
+        left = row[:fiscal]#.reshape(-1)
+        right = reman[dim:lacal]#.reshape(-1)
+        mat_row = *left,*right
         hank.append(mat_row)
     return cp.bmat(hank)
 
@@ -38,4 +39,4 @@ def construct2d(data, lag, dim):
     """
     N = data.shape
     Yapp = cp.Variable(N)
-    cp.Minimize(cp.normNuc(cp2dhanker(Yapp[:lag], Yapp[lag:], dim)))
+    cp.normNuc(cp2dhanker(Yapp[:lag], Yapp[lag:], dim))

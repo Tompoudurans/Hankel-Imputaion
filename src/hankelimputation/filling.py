@@ -67,6 +67,7 @@ def processing(data, batch, e, maxinter):
     numpy_data = data.to_numpy()
     mask = data.notna()
     N, dim = data.shape
+    print("your data has",N,"timesteps and",dim,"varibles")
     if batch == 0:
         lag = testmax_Lag(numpy_data)
         filled = filling(numpy_data, mask, lag, e, dim, maxinter)
