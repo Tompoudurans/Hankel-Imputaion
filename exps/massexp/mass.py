@@ -136,7 +136,7 @@ def mass_mutiar(trm,length,sig):
 def create2d(trms,lengh,burn):
     data = mass_mutiar(trms,lengh,0.1)
     frame = pd.DataFrame(data[burn:])
-    return frame[[0,3,6]]
+    return frame
 
 def mass(amount,trms,lengh,burn,permode,name):
     setname = ["sta","wave","3ar"]
@@ -207,5 +207,5 @@ def exp1(setname,per):
     mass(100,tms,180,40,per,setname)
 
 if __name__ == "__main__":
-    for i in range(8):
-        exp1("sta",i/10)
+    for i in range(20):
+        exp1("3ar",i/10)
