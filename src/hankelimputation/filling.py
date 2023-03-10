@@ -3,20 +3,21 @@ from .functions2d import *
 import pandas as pd
 
 
-def testmax_Lag(numpy_data):
+def testmax_Lag(numpy_data,N,dim):
     """
     Test the Maximum number that lag can have a large lag gives a better results but too big have this error occurs:
     ValueError: All the input dimensions except for axis 0 must match exactly. cp.bmat(hank)
     """
-    N, dim = numpy_data.shape
     pnt = int(N / 2.8)
     for v in range(pnt):
         lag = pnt - v
         try:
             if dim > 1:
                 construct2d(numpy_data, lag, dim)
-            else:
+            elif dim == 1:
                 construct1d(numpy_data.transpose()[0], lag)
+            else:
+                construct1d(numpy_data, lag)
         except ValueError as e:
             if lag % 5 == 0:
                 print("less than", lag)
@@ -28,7 +29,7 @@ def testmax_Lag(numpy_data):
             return lag
 
 
-def batchfilling(numpy_data, mask, lag, e, dim, batch_size, N, maxinter):
+def batchfilling(numpy_data, mask, lag, e, dim, batch_size, N, **kwags):
     """
     fill data in batches using hankel imputaion method
     """
@@ -41,39 +42,48 @@ def batchfilling(numpy_data, mask, lag, e, dim, batch_size, N, maxinter):
             lag,
             e,
             dim,
-            maxinter,
+            **kwags,
         )
         list_filled_dataframe.append(filled_dataframe)
     return pd.concat(list_filled_dataframe)
 
 
-def filling(numpy_data, mask, lag, e, dim, maxinter):
+def filling(numpy_data, mask, lag, e, dim, **kawgs):
     """
     fill data using hankel imputaion method
     """
     if dim > 1:
-        filled = hankel_imputaion_2d(numpy_data, lag, e, mask, maxinter, dim)
+        filled = hankel_imputaion_2d(numpy_data, lag, e, mask, dim, **kawgs)
+    elif dim == 1:
+        filled = hankel_imputaion_1d(
+            numpy_data.transpose()[0], lag, e, mask.to_numpy().transpose()[0], **kawgs
+        )
     else:
         filled = hankel_imputaion_1d(
-            numpy_data.transpose()[0], lag, e, mask.to_numpy().transpose()[0], maxinter
+            numpy_data, lag, e, mask, **kawgs
         )
     return pd.DataFrame(filled)
 
 
-def processing(data, batch, e, maxinter):
+def processing(data, batch, e, **kawgs):
     """
     calulates the mask, the lag, the shape
     """
     numpy_data = data.to_numpy()
     mask = data.notna()
-    N, dim = data.shape
+    predata = data.copy().interpolate().to_numpy()
+    try:
+        N, dim = data.shape
+    except ValueError:
+         N = len(data)
+         dim = 0
     print("your data has",N,"timesteps and",dim,"varibles")
     if batch == 0:
-        lag = testmax_Lag(numpy_data)
-        filled = filling(numpy_data, mask, lag, e, dim, maxinter)
+        lag = testmax_Lag(numpy_data,N,dim)
+        filled = filling(numpy_data, mask, lag, e, dim, predata=predata, **kawgs)
     else:
-        lag = testmax_Lag(numpy_data[:batch])
-        filled = batchfilling(numpy_data, mask, lag, e, dim, batch, N, maxinter)
+        lag = testmax_Lag(numpy_data[:batch],batch,dim)
+        filled = batchfilling(numpy_data, mask, lag, e, dim, batch, N, predata=predata, **kawgs)
     return filled
 
 

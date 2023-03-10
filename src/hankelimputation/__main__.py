@@ -19,7 +19,7 @@ def main(batch, file, e, removezero, maxtime):
     read a file and fill using the hankel imputaion method
     """
     data = pd.read_csv(file, skip_blank_lines=False)
-    filled = processing(data, batch, e, maxtime)
+    filled = processing(data, batch, e, verbose=True, max_iters=maxtime)
     if removezero:
         filled = refillzero(filled)
     filled.to_csv(file.split(".")[0] + "_filled.csv", index=False)

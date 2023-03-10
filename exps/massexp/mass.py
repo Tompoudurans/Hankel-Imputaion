@@ -5,6 +5,12 @@ import pandas as pd
 import scipy.optimize
 from sklearn.metrics import mean_squared_error
 import matplotlib.pyplot as mp
+from rpy2.robjects.packages import importr
+from rpy2.robjects import pandas2ri
+utils = importr('utils')
+base = importr('base')
+its = importr("imputeTS")
+pandas2ri.activate()
 
 def mkhle(data,percent):
     x, y = data.shape
@@ -62,29 +68,50 @@ class ewmsug:
         self.optim(0.5)
         return self.data.copy().ewm(alpha=self.res.x[0]).mean()
 
-def fullana(lengh,filleds,org,withgap):
+def fullana(filleds,org,withgap):
     emas = ewmsug(withgap)
     ewms = emas.create_ewm()
     interps = withgap.copy().interpolate()
-    lables = ["HI","ewms","interps","orignal"]
-    datalist = [filleds,ewms,interps,org]
-    for i in range(3):
+    spline = its.na_interpolation(withgap.copy(),option = "spline")
+    stine = its.na_interpolation(withgap.copy(),option = "stine")
+    sea = its.na_seadec(withgap.copy())
+    kal = its.na_kalman(withgap.copy())
+    seap = its.na_seasplit(withgap.copy())
+    #return spline
+    datalist = [
+        spline[0].reshape(-1,1),
+        stine[0].reshape(-1,1),
+        sea.reshape(-1,1),
+        kal[0].reshape(-1,1),
+        seap.reshape(-1,1),
+        ewms.to_numpy(),
+        interps.to_numpy(),
+        filleds.to_numpy()
+    ]
+    table = []
+    for i in range(len(datalist)):
+        print(i,end="-")
         datalist[i] = maskorg(withgap,datalist[i])
-    #fig = anaplot(datalist,startlist,lables,data,lengh)
-    table = [
-        ana(org,filleds,lables[0],lengh),
-        ana(org,ewms,lables[1],lengh),
-        ana(org,interps,lables[2],lengh),
-        ]
+        table.append(ana(org,datalist[i]))
+    print("8")
     res = pd.DataFrame(table).transpose()
-    res.columns = lables[:3]
-    return res#,fig
+    res.columns = [
+        "spline",
+        "stine",
+        "sea",
+        "kal",
+        "seap",
+        "emas",
+        "interps",
+        "dualhi"
+        ]
+    return res
 
-def ana(org,filled,lab,lengh):
+def ana(org,filled):
     pac = []
     try:
         if org.shape[1] > 1:
-            for i in range(lengh):
+            for i in range(org.shape[1]):
                 mes = mean_squared_error(org.iloc[:,i],filled.iloc[:,i])
                 pac.append(mes)
         else:
@@ -99,13 +126,12 @@ def ana(org,filled,lab,lengh):
 
 def maskorg(miss,fill):
     binpos = miss.isna()
-    binneg = miss.notna()
-    mix = miss.copy()
+    mix = miss.copy().to_numpy()
     mix[binpos] = fill[binpos]
     return mix
 
 def fill(data):
-    return hankelimputation.processing(data,0,0.1,5000)
+    return hankelimputation.processing(data,0,0.1,max_iters=4500,verbose=True)
 
 def create(trms,lengh,burn):
     data = []
@@ -135,19 +161,22 @@ def mass_mutiar(trm,length,sig):
 
 def create2d(trms,lengh,burn):
     data = mass_mutiar(trms,lengh,0.1)
-    frame = pd.DataFrame(data[burn:])
-    return frame[[0,3,6]]
+    frame = pd.DataFrame(data).iloc[burn:]
+    return frame.reset_index(drop=True)
 
 def mass(amount,trms,lengh,burn,permode,name):
+    number = str(random.randint(0,1000))
     setname = ["sta","wave","3ar"]
     if setname.count(name) == 0:
         data = pd.read_csv(name + ".csv")
-    results = pd.DataFrame(columns=["HI","ewms","interps","trial"])
+    results = pd.DataFrame([])
     if permode == -1:
         percent = 0.1
     else:
         percent = permode 
     for i in range(amount):
+        print(percent)
+        print("epoch:",i,"/",amount)
         if setname.count(name) == 1:
             if trms.shape[0] == trms.shape[1]:
                 data = create2d(trms,lengh,burn)
@@ -158,15 +187,26 @@ def mass(amount,trms,lengh,burn,permode,name):
         print("2 of 4")
         refill = fill(withgap.copy())
         print("3 of 4")
-        res = fullana(lengh,refill,data,withgap)
-        res["trial"] = i
+        if i == 0:
+            withgap.to_csv(name +  "-" + number + "-gap.csv")
+            refill.to_csv(name +  "-" + number + "-fill.csv")
+            data.to_csv(name +  "-" + number + "-data.csv")
+        try:
+            res = fullana(refill,data,withgap)
+            res["trial"] = i
+        except Exception as e:
+            print(e)
+            return
         print("4 of 4")
         if permode == -1:
             percent = percent + 0.1
-        results = pd.concat([res,results])
-    number = str(int(permode*100))#str(random.randint(0,10000))
+        try:
+            results = pd.concat([res,results])
+        except Exception:
+            print("reset")
+            results = res
     print("exp number: " + number)
-    results.to_csv(name + number + ".csv")
+    results.to_csv(name +  "-" + str(int(permode*100)) + "-" + number + ".csv")
     return results
 
 def plotana(data, name):
@@ -183,9 +223,9 @@ def plotana(data, name):
 def get_trms(setname):
     if setname == "sta":
         trm1 =[0.6,0.4,-0.1,-0.05,0.03,0.008,0.0007,-0.0004,0.00002,]
-        trm2 =[0.57,0.41,-0.11,-0.05,0.03,0.009,0.0004,-0.0003,0.00001,]
-        trm3 =[0.63,0.37,-0.13,-0.04,0.032,0.0091,0.0008,-0.0005,0.00003,]
-        trms = numpy.array([trm1,trm2,trm3])
+        #trm2 =[0.57,0.41,-0.11,-0.05,0.03,0.009,0.0004,-0.0003,0.00001,]
+        #trm3 =[0.63,0.37,-0.13,-0.04,0.032,0.0091,0.0008,-0.0005,0.00003,]
+        trms = numpy.array([trm1])#,trm2,trm3])
     elif setname == "wave":
         trms = numpy.array(
             [[0.6,0.22,0.13,0.02,0.05,0.003,0.0004],
@@ -202,10 +242,12 @@ def get_trms(setname):
         trms = None
     return trms
 
-def exp1(setname,per):
+def exp1(setname,per,lengh):
     tms =  get_trms(setname)
-    mass(100,tms,180,40,per,setname)
+    mass(lengh,tms,180,40,per,setname)
 
 if __name__ == "__main__":
-    for i in range(8):
-        exp1("sta",i/10)
+    whats = input("filename ")
+    hows = input("exptype ")
+    whens = input("lenght ")
+    exp1(setname=whats,per=float(hows),lengh=int(whens))

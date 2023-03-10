@@ -1,7 +1,7 @@
 import cvxpy as cp
 
 
-def hankel_imputaion_2d(data, lag, e, mask, maxinter, dim):
+def hankel_imputaion_2d(data, lag, e, mask, dim, predata=None,**kwags):
     """
     Preforms a hankel imputaion with 2 dimetions
     by a convex optimation of minimation of the norm of hankle matrix of imputed variables
@@ -10,10 +10,18 @@ def hankel_imputaion_2d(data, lag, e, mask, maxinter, dim):
     print("Multivar filling")
     N = data.shape
     Yapp = cp.Variable(N)
+    try:
+        Yapp.value = predata
+    except Exception:
+        print("no pre-data")
+    bacYapp = Yapp[::-1]
+    foward = cp2dhanker(Yapp[:lag], Yapp[lag:],dim)
+    backard = cp2dhanker(bacYapp[:lag], bacYapp[lag:],dim)
+    objective = cp.Minimize(cp.normNuc(foward) + cp.normNuc(backard))
     constraints = [cp.norm((data[mask] - Yapp[mask])) <= e]
-    objective = cp.Minimize(cp.normNuc(cp2dhanker(Yapp[:lag], Yapp[lag:], dim)))
     prob = cp.Problem(objective, constraints)
-    prob.solve(verbose=True, max_iters=maxinter)
+    #prob.solve(**kwags)
+    prob.solve(verbose=True)
     return Yapp.value
 
 

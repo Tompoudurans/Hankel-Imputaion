@@ -2,7 +2,7 @@ import cvxpy as cp
 import numpy as np
 
 
-def hankel_imputaion_1d(data, lag, e, mask, maxinter):
+def hankel_imputaion_1d(data, lag, e, mask, predata=None,**kawgs):
     """
     Preforms a hankel imputaion with 1 dimetions
     by a convex optimation of minimation of the norm of hankle matrix of imputed variables
@@ -11,12 +11,18 @@ def hankel_imputaion_1d(data, lag, e, mask, maxinter):
     print("monovar filling")
     N = len(data)
     Yapp = cp.Variable(N)
-    objective = cp.Minimize(cp.normNuc(cphanker(Yapp[:lag], Yapp[lag:N])))
+    try:
+        Yapp.value = predata.transpose()[0]
+    except Exception:
+        print("no pre-data")
+    bacYapp = Yapp[::-1]
+    foward = cp2dhanker(Yapp[:lag], Yapp[lag:])
+    backard = cp2dhanker(bacYapp[:lag], bacYapp[lag:])
+    objective = cp.Minimize(cp.normNuc(foward) + cp.normNuc(backard))
     constraints = [cp.norm((data[mask] - Yapp[mask])) <= e]
     prob = cp.Problem(objective, constraints)
-    prob.solve(verbose=True, max_iters=maxinter)
+    prob.solve(**kawgs)
     return Yapp.value
-
 
 def cphanker(row, reman):
     """
