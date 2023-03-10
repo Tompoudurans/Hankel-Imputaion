@@ -16,8 +16,8 @@ def hankel_imputaion_1d(data, lag, e, mask, predata=None,**kawgs):
     except Exception:
         print("no pre-data")
     bacYapp = Yapp[::-1]
-    foward = cp2dhanker(Yapp[:lag], Yapp[lag:])
-    backard = cp2dhanker(bacYapp[:lag], bacYapp[lag:])
+    foward = cphanker(Yapp[:lag], Yapp[lag:])
+    backard = cphanker(bacYapp[:lag], bacYapp[lag:])
     objective = cp.Minimize(cp.normNuc(foward) + cp.normNuc(backard))
     constraints = [cp.norm((data[mask] - Yapp[mask])) <= e]
     prob = cp.Problem(objective, constraints)
