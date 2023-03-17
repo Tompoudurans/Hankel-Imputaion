@@ -1,3 +1,4 @@
+from math import pi
 import hankelimputation
 import random
 import numpy
@@ -7,6 +8,8 @@ from sklearn.metrics import mean_squared_error
 import matplotlib.pyplot as mp
 from rpy2.robjects.packages import importr
 from rpy2.robjects import pandas2ri
+import scipy
+
 utils = importr('utils')
 base = importr('base')
 its = importr("imputeTS")
@@ -77,7 +80,6 @@ def fullana(filleds,org,withgap):
     sea = its.na_seadec(withgap.copy())
     kal = its.na_kalman(withgap.copy())
     seap = its.na_seasplit(withgap.copy())
-    #return spline
     datalist = [
         spline[0].reshape(-1,1),
         stine[0].reshape(-1,1),
@@ -107,22 +109,7 @@ def fullana(filleds,org,withgap):
         ]
     return res
 
-def ana(org,filled):
-    pac = []
-    try:
-        if org.shape[1] > 1:
-            for i in range(org.shape[1]):
-                mes = mean_squared_error(org.iloc[:,i],filled.iloc[:,i])
-                pac.append(mes)
-        else:
-            pac = mean_squared_error(org,filled)
-    except Exception as e:
-        print(e)
-        print("org","filled",sep="\t")
-        print(org.iloc[:].shape,filled.shape,sep="\t")
-        print(org.isna().sum().sum(),filled.isna().sum().sum(),sep="\t")
-        print("expected len:",lengh)
-    return pac
+
 
 def maskorg(miss,fill):
     binpos = miss.isna()
@@ -164,7 +151,26 @@ def create2d(trms,lengh,burn):
     frame = pd.DataFrame(data).iloc[burn:]
     return frame.reset_index(drop=True)
 
-def mass(amount,trms,lengh,burn,permode,name):
+def pern(v,norm=True):
+    w = calw(len(v))
+    npr = numpy.array(range(len(v)))
+    return scipy.signal.lombscargle(npr, v, w,normalize=norm)
+
+def calw(n):
+    w=[]
+    for j in range(1,int(n/2)):
+        w.append(2*pi*j/n)
+    return numpy.array(w)
+
+def ana(x,y):
+    nor = True #False
+    defr = pern(x,nor) - pern(y,nor)
+    totpen = sum(defr**2)
+    #return sqrt(totpen)
+    return totpen 
+
+def mass(amount,trms,lengh,burn,permode,name,savedatas):
+    print("saving ",savedatas)
     number = str(random.randint(0,1000))
     setname = ["sta","wave","3ar"]
     if setname.count(name) == 0:
@@ -186,17 +192,25 @@ def mass(amount,trms,lengh,burn,permode,name):
         withgap = mkhle(data.copy(),percent)
         print("2 of 4")
         refill = fill(withgap.copy())
-        print("3 of 4")
-        if i == 0:
+        if savedatas:
             withgap.to_csv(name +  "-" + number + "-gap.csv")
             refill.to_csv(name +  "-" + number + "-fill.csv")
             data.to_csv(name +  "-" + number + "-data.csv")
+        print("3 of 4")
+        novar = data.shape[1]
         try:
-            res = fullana(refill,data,withgap)
+            if novar == 1:
+                res = fullana(refill,data,withgap)
+            else:
+                preres = []
+                for vrs in range(novar):
+                    preres.append(fullana2(refill.iloc[:,vrs],data.iloc[:,vrs],withgap.iloc[:,vrs]))
+                res = pd.concat(preres)
+                res.index = range(novar)
             res["trial"] = i
         except Exception as e:
-            print(e)
-            return
+            print(e,"#",novar)
+            return withgap,refill,data
         print("4 of 4")
         if permode == -1:
             percent = percent + 0.1
@@ -208,6 +222,44 @@ def mass(amount,trms,lengh,burn,permode,name):
     print("exp number: " + number)
     results.to_csv(name +  "-" + str(int(permode*100)) + "-" + number + ".csv")
     return results
+
+def fullana2(filleds,org,withgap):
+    emas = ewmsug(withgap)
+    ewms = emas.create_ewm()
+    interps = withgap.copy().interpolate()
+    spline = its.na_interpolation(withgap.copy(),option = "spline")
+    stine = its.na_interpolation(withgap.copy(),option = "stine")
+    sea = its.na_seadec(withgap.copy())
+    kal = its.na_kalman(withgap.copy())
+    seap = its.na_seasplit(withgap.copy())
+    datalist = [
+        spline,
+        stine,
+        sea,
+        kal,
+        seap,
+        ewms.to_numpy(),
+        interps.to_numpy(),
+        filleds.to_numpy()
+    ]
+    table = []
+    for i in range(len(datalist)):
+        print(i,end="-")
+        datalist[i] = maskorg(withgap,datalist[i])
+        table.append(ana(org,datalist[i]))
+    print("8")
+    res = pd.DataFrame(table).transpose()
+    res.columns = [
+        "spline",
+        "stine",
+        "sea",
+        "kal",
+        "seap",
+        "emas",
+        "interps",
+        "dualhi"
+        ]
+    return res
 
 def plotana(data, name):
     trail = data.groupby(by=["trial"]).mean()
@@ -242,12 +294,17 @@ def get_trms(setname):
         trms = None
     return trms
 
-def exp1(setname,per,lengh):
+def exp1(setname,per,lengh,savedatas):
     tms =  get_trms(setname)
-    mass(lengh,tms,180,40,per,setname)
+    mass(lengh,tms,180,30,per,setname,savedatas)
 
 if __name__ == "__main__":
     whats = input("filename ")
-    hows = input("exptype ")
-    whens = input("lenght ")
-    exp1(setname=whats,per=float(hows),lengh=int(whens))
+    try:
+        hows = float(input("exptype "))
+        whens = int(input("lenght "))
+        wheres = bool(input("save data (0/1) "))
+    except Exception:
+        print("wrong input")
+    else:
+        exp1(setname=whats,per=hows,lengh=whens,savedatas=wheres)

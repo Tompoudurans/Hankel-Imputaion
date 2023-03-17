@@ -22,12 +22,15 @@ def anaplot2(sub,lab,org,lengh):
     fig.set_figwidth(15)
     return fig
 
+def find_org():
+    pass
+
 def getset(filename):
     gap = pd.read_csv(filename + "-gap.csv",skip_blank_lines=False,index_col=0)
     fill = pd.read_csv(filename + "-fill.csv",index_col=0)
     org = pd.read_csv(filename + "-data.csv",index_col=0)
     lengh = org.shape[1]
-    print(lengh)
+    print(lengh,fill.shape[1],gap.shape[1])
     if lengh == 1:
         fig = anaplot([fill,org],["fill","org"],gap)
     else:
