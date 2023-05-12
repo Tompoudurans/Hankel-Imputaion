@@ -69,6 +69,7 @@ def processing(data, batch, e, **kawgs):
     """
     calulates the mask, the lag, the shape
     """
+    print("epsilon:",e)
     numpy_data = data.to_numpy()
     mask = data.notna()
     predata = data.copy().interpolate().to_numpy()
