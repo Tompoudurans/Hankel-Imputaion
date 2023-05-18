@@ -1,5 +1,4 @@
-from .functions1d import *
-from .functions2d import *
+from .functions import *
 import pandas as pd
 
 
@@ -13,11 +12,9 @@ def testmax_Lag(numpy_data,N,dim):
         lag = pnt - v
         try:
             if dim > 1:
-                construct2d(numpy_data, lag, dim)
+                construct(numpy_data, lag, dim)
             elif dim == 1:
-                construct1d(numpy_data.transpose()[0], lag)
-            else:
-                construct1d(numpy_data, lag)
+                construct(numpy_data.transpose()[0], lag, dim)
         except ValueError as e:
             if lag % 5 == 0:
                 print("less than", lag)
@@ -53,13 +50,13 @@ def filling(numpy_data, mask, lag, e, dim, **kawgs):
     fill data using hankel imputaion method
     """
     if dim > 1:
-        filled = hankel_imputaion_2d(numpy_data, lag, e, mask, dim, **kawgs)
+        filled = hankel_imputaion(numpy_data, lag, e, mask, dim, **kawgs)
     elif dim == 1:
-        filled = hankel_imputaion_1d(
+        filled = hankel_imputaion(
             numpy_data.transpose()[0], lag, e, mask.to_numpy().transpose()[0], **kawgs
         )
     else:
-        filled = hankel_imputaion_1d(
+        filled = hankel_imputaion(
             numpy_data, lag, e, mask, **kawgs
         )
     return pd.DataFrame(filled)
