@@ -26,22 +26,28 @@ def testmax_Lag(numpy_data,N,dim):
             return lag
 
 
-def batchfilling(numpy_data, mask, lag, e, dim, batch_size, N, **kwags):
+def batchfilling(numpy_data, mask, e, dim, batch_size, N, **kwags):
     """
     fill data in batches using hankel imputaion method
     """
     list_filled_dataframe = []
-    for batch in range(0, N - batch_size, batch_size):
-        print(batch, batch + batch_size)
-        filled_dataframe = filling(
-            numpy_data[batch : batch + batch_size],
-            mask[batch : batch + batch_size],
-            lag,
-            e,
-            dim,
-            **kwags,
-        )
-        list_filled_dataframe.append(filled_dataframe)
+    lag = testmax_Lag(numpy_data[:batch_size],batch_size,dim)
+    for batch in range(0, N, batch_size):
+        endbatch = min(batch + batch_size,N)
+        newbat = endbatch - batch
+        if newbat > 1:
+            print(batch, endbatch)
+            if newbat < batch_size:
+            	lag = testmax_Lag(numpy_data[:newbat],newbat,dim)
+            filled_dataframe = filling(
+                numpy_data[batch : endbatch],
+                mask[batch : endbatch],
+                lag,
+                e,
+                dim,
+                **kwags,
+            )
+            list_filled_dataframe.append(filled_dataframe)
     return pd.concat(list_filled_dataframe)
 
 
@@ -80,8 +86,7 @@ def processing(data, batch, e, **kawgs):
         lag = testmax_Lag(numpy_data,N,dim)
         filled = filling(numpy_data, mask, lag, e, dim, predata=predata, **kawgs)
     else:
-        lag = testmax_Lag(numpy_data[:batch],batch,dim)
-        filled = batchfilling(numpy_data, mask, lag, e, dim, batch, N, predata=predata, **kawgs)
+        filled = batchfilling(numpy_data, mask, e, dim, batch, N, predata=predata, **kawgs)
     return filled
 
 
