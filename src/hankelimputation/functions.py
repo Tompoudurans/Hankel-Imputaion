@@ -38,12 +38,16 @@ def hankel_imputaion(data, lag, e, mask, dim=1, double=True, predata=None,**kawg
             Yapp.value = predata[:N[0]]
     except Exception as essa:
         print("no pre-data because of",essa,"\n")
-    foward = cphmat(Yapp,lag,dim,N)
-    objective = cp.Minimize(cp.normNuc(foward))
-    constraints = [cp.norm((data[mask] - Yapp[mask])) <= e]   
+    adjutvar = cphmat(Yapp,lag,dim,N)
+    objective = cp.Minimize(cp.normNuc(adjutvar))
+    constraints = [cp.norm((data[mask] - Yapp[mask])) <= e,fourcons(Yapp) == 0]   
     prob = cp.Problem(objective, constraints)
     prob.solve(**kawgs)
     return Yapp.value
+
+def fourcons(reg):
+    return 0
+
 
 def construct(data, lag, dim):
     """
