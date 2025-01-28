@@ -84,10 +84,10 @@ def mkw(bign):
     return w
 
 
-def construct(data, lag, dim):
+def construct(data, lag):
     """
     sends a ValueError if lag is too big
     """
     N = data.shape
     Yapp = cp.Variable(N)
-    cp.normNuc(cphmat(Yapp, lag, dim, N))
+    cp.normNuc(cphmat(Yapp, lag, N))
