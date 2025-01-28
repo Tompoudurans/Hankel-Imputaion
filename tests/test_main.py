@@ -48,7 +48,7 @@ def test_full():
     ar = pandas.DataFrame([a,b]).transpose()
     ar.to_csv("test.csv")
     holear = mkhle(ar.copy(),0.1)
-    filled = hankelimputation.processing(holear,0,0.1,max_iters=5000)
+    filled = hankelimputation.processing(holear,0,[0.1],max_iters=5000)
     assert filled.isna().sum().sum() == 0
 
 def test_batch():
@@ -68,7 +68,7 @@ def test_batch():
     b = loopar(y.copy(),trm,30,0.2)
     ar = pandas.DataFrame([a,b]).transpose()
     holear = mkhle(ar.copy(),0.1)
-    filled = hankelimputation.processing(holear,10,0.1,max_iters=5000)
+    filled = hankelimputation.processing(holear,10,[0.1],max_iters=5000)
     assert filled.isna().sum().sum() == 0
 
 def test_single():
@@ -87,5 +87,24 @@ def test_single():
     a = loopar(y.copy(),trm,40,0.1)
     ar = pandas.DataFrame(a)
     holear = mkhle(ar.copy(),0.1)
-    filled = hankelimputation.processing(holear,0,0.1,max_iters=5000)
+    filled = hankelimputation.processing(holear,0,[0.1],max_iters=5000)
+    assert filled.isna().sum().sum() == 0
+
+def test_four():
+    trm =[
+        0.6,
+        0.4,
+        -0.1,
+        -0.05,
+        0.03,
+        0.008,
+        0.0007,
+        -0.0004,
+        0.00002,
+    ]
+    y = [0]*len(trm)
+    a = loopar(y.copy(),trm,40,0.1)
+    ar = pandas.DataFrame(a)
+    holear = mkhle(ar.copy(),0.1)
+    filled = hankelimputation.processing(holear,0,[0.1,0.1],max_iters=5000)
     assert filled.isna().sum().sum() == 0
