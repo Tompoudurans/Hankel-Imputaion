@@ -12,9 +12,9 @@ def testmax_Lag(numpy_data,N,dim):
         lag = pnt - v
         try:
             if dim > 1:
-                construct(numpy_data, lag, dim)
+                construct(numpy_data, lag)
             elif dim == 1:
-                construct(numpy_data.transpose()[0], lag, dim)
+                construct(numpy_data.transpose()[0], lag)
         except ValueError as e:
             if lag % 5 == 0:
                 print("less than", lag)
