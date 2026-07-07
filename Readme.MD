@@ -18,3 +18,7 @@ pip install pytest
 python -m pytest
 
 note: expect warning of "Objective contains too many subexpressions"
+
+# paper:
+
+https://arxiv.org/pdf/2408.02594
